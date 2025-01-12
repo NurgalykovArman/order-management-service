@@ -1,15 +1,22 @@
 package com.example.nurgalykovArman;
 
+import com.example.nurgalykovArman.enums.Role;
 import com.example.nurgalykovArman.models.Order;
 import com.example.nurgalykovArman.models.Product;
+import com.example.nurgalykovArman.models.User;
 import com.example.nurgalykovArman.repositories.OrderRepository;
 import com.example.nurgalykovArman.repositories.ProductRepository;
 import com.example.nurgalykovArman.enums.OrderStatus;
+import com.example.nurgalykovArman.repositories.UserRepository;
+import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+
+import java.util.Set;
 
 @Component
 public class DataInitializer implements CommandLineRunner {
@@ -65,5 +72,31 @@ public class DataInitializer implements CommandLineRunner {
         orderRepository.save(order2);
 
         logger.info("The database has been created, the initial data has been uploaded");
+    }
+
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    public DataInitializer(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
+
+    @PostConstruct
+    public void init() {
+        if (userRepository.count() == 0) {
+            User admin = new User();
+            admin.setUsername("admin");
+            admin.setPassword(passwordEncoder.encode("admin")); // Пароль "admin"
+            admin.setRoles(Set.of(Role.ADMIN));
+
+            User user = new User();
+            user.setUsername("user");
+            user.setPassword(passwordEncoder.encode("user")); // Пароль "user"
+            user.setRoles(Set.of(Role.USER));
+
+            userRepository.save(admin);
+            userRepository.save(user);
+        }
     }
 }
